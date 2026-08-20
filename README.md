@@ -14,9 +14,9 @@ An explainable AI-powered platform that analyzes failed payments, predicts recov
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-**Status:** Prototype / Internship Submission (**Razorpay AI Builder Internship 2026 — Track 3: AI Revenue Recovery**)
 
-[Live Demo](#) • [GitHub Repository](https://github.com/Aaditya0411/RazorRecover-AI) • [Demo Video](#)
+
+
 
 </div>
 
