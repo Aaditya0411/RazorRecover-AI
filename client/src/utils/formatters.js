@@ -11,6 +11,15 @@ export function formatINR(amount) {
   }).format(amount);
 }
 
+export function formatLakhs(amount) {
+  if (amount === undefined || amount === null) return "₹0";
+  if (amount >= 100000) {
+    const lakhs = (amount / 100000).toFixed(2);
+    return `₹${lakhs}L`;
+  }
+  return formatINR(amount);
+}
+
 export function formatPercent(value) {
   if (value === undefined || value === null) return "0%";
   return `${Math.round(value)}%`;
@@ -32,25 +41,25 @@ export function formatFailureReason(reason) {
 export function getPriorityColor(priority) {
   switch (priority) {
     case "High":
-      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
     case "Medium":
-      return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+      return "bg-amber-50 text-amber-700 border-amber-200";
     case "Low":
-      return "bg-rose-500/10 text-rose-400 border-rose-500/30";
+      return "bg-slate-100 text-slate-600 border-slate-200";
     default:
-      return "bg-slate-500/10 text-slate-400 border-slate-500/30";
+      return "bg-slate-100 text-slate-600 border-slate-200";
   }
 }
 
 export function getStatusBadge(status) {
   switch (status) {
     case "recovered":
-      return { label: "Recovered", color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" };
+      return { label: "Recovered", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
     case "in_recovery":
-      return { label: "In Recovery", color: "bg-indigo-500/20 text-indigo-300 border-indigo-500/40" };
+      return { label: "In Recovery", color: "bg-blue-100 text-blue-800 border-blue-200" };
     case "failed":
     default:
-      return { label: "Failed", color: "bg-rose-500/20 text-rose-300 border-rose-500/40" };
+      return { label: "Failed", color: "bg-rose-50 text-rose-700 border-rose-200" };
   }
 }
 

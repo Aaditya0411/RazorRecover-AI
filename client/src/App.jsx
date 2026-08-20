@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "./components/Navbar";
+import HeroOpportunitySection from "./components/HeroOpportunitySection";
 import KpiCards from "./components/KpiCards";
+import AiOpportunityPanel from "./components/AiOpportunityPanel";
 import RecoveryQueue from "./components/RecoveryQueue";
 import TransactionDetailModal from "./components/TransactionDetailModal";
+import AiAnalysisModal from "./components/AiAnalysisModal";
 import AnalyticsView from "./components/AnalyticsView";
 import AiInsightsView from "./components/AiInsightsView";
 import RecoverySimulationModal from "./components/RecoverySimulationModal";
 import { api } from "./services/api";
-import { Cpu, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("queue");
 
-  // Telemetry States
+  // Data States
   const [summary, setSummary] = useState({});
   const [transactions, setTransactions] = useState([]);
   const [analytics, setAnalytics] = useState({});
@@ -24,16 +27,17 @@ export default function App() {
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
   const [isLoadingInsights, setIsLoadingInsights] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  // Queue Filters & Sorting
+  // Queue Controls
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReason, setSelectedReason] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [sortBy, setSortBy] = useState("recoveryProbability");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  // Modals & Drawers
+  // Selected Modals
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [simulationTransaction, setSimulationTransaction] = useState(null);
 
@@ -45,7 +49,6 @@ export default function App() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Fetch KPI Summary
   const loadSummary = useCallback(async () => {
     setIsLoadingSummary(true);
     try {
@@ -58,7 +61,6 @@ export default function App() {
     }
   }, []);
 
-  // Fetch Queue Transactions
   const loadTransactions = useCallback(async () => {
     setIsLoadingTransactions(true);
     try {
@@ -77,7 +79,6 @@ export default function App() {
     }
   }, [searchTerm, selectedReason, selectedPriority, sortBy, sortOrder]);
 
-  // Fetch Analytics & Insights
   const loadAnalyticsAndInsights = useCallback(async () => {
     setIsLoadingAnalytics(true);
     setIsLoadingInsights(true);
@@ -96,7 +97,6 @@ export default function App() {
     }
   }, []);
 
-  // Initial Load & Filter Changes
   useEffect(() => {
     loadSummary();
     loadAnalyticsAndInsights();
@@ -106,15 +106,13 @@ export default function App() {
     loadTransactions();
   }, [loadTransactions]);
 
-  // Handler: Run AI Analysis (Requirement #14)
+  // Handler: Run AI Analysis Scanner
   const handleRunAiAnalysis = async () => {
     setIsAnalyzing(true);
+    setShowAiModal(true);
     try {
-      // Short visual delay to display scanning animation state
-      await new Promise(resolve => setTimeout(resolve, 1200));
       const res = await api.runAiAnalysis();
       if (res.success) {
-        showToast("AI Recovery Engine successfully scanned and re-scored all transactions!");
         await Promise.all([loadSummary(), loadTransactions(), loadAnalyticsAndInsights()]);
       }
     } catch (err) {
@@ -124,13 +122,13 @@ export default function App() {
     }
   };
 
-  // Handler: Reset/Reseed Data
+  // Handler: Reset Data
   const handleResetData = async () => {
     setIsResetting(true);
     try {
       const res = await api.reseed();
       if (res.success) {
-        showToast("Synthetic dataset reset to default 45 demo transactions.");
+        showToast("Synthetic dataset reset to default transactions.");
         await Promise.all([loadSummary(), loadTransactions(), loadAnalyticsAndInsights()]);
       }
     } catch (err) {
@@ -140,13 +138,12 @@ export default function App() {
     }
   };
 
-  // Handler: Simulate Recovery Execution (Requirement #15)
+  // Handler: Simulate Recovery
   const handleConfirmSimulateRecovery = async (id) => {
     try {
       const res = await api.simulateRecovery(id);
       if (res.success) {
         showToast(`Successfully simulated recovery for transaction ${id}!`);
-        // Refresh summary, transactions queue, analytics
         await Promise.all([loadSummary(), loadTransactions(), loadAnalyticsAndInsights()]);
       }
     } catch (err) {
@@ -155,15 +152,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce">
           <div
-            className={`flex items-center space-x-2 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold ${
+            className={`flex items-center space-x-2 px-4 py-3 rounded-2xl shadow-lg border text-xs font-bold ${
               toast.type === "error"
-                ? "bg-rose-950/90 border-rose-500/40 text-rose-200"
-                : "bg-emerald-950/90 border-emerald-500/40 text-emerald-200"
+                ? "bg-rose-900 text-white border-rose-700"
+                : "bg-slate-900 text-white border-slate-800"
             }`}
           >
             {toast.type === "error" ? (
@@ -172,26 +169,6 @@ export default function App() {
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             )}
             <span>{toast.message}</span>
-          </div>
-        </div>
-      )}
-
-      {/* AI Analysis Scanning Overlay State */}
-      {isAnalyzing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md">
-          <div className="glass-card border border-sky-500/30 rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 bg-sky-500/10 border border-sky-500/30 rounded-full flex items-center justify-center mx-auto text-sky-400">
-              <Cpu className="w-8 h-8 animate-spin" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Analyzing Payment Failure Patterns...</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Calculating recovery probability vectors, expected revenue, and optimal retry actions.
-              </p>
-            </div>
-            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-gradient-to-r from-sky-500 to-indigo-500 h-full w-full animate-pulse"></div>
-            </div>
           </div>
         </div>
       )}
@@ -207,33 +184,41 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* KPI Header Cards */}
-        <KpiCards summary={summary} isLoading={isLoadingSummary} />
-
-        {/* Tab 1: Recovery Queue */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {activeTab === "queue" && (
-          <RecoveryQueue
-            transactions={transactions}
-            isLoading={isLoadingTransactions}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            selectedReason={selectedReason}
-            setSelectedReason={setSelectedReason}
-            selectedPriority={selectedPriority}
-            setSelectedPriority={setSelectedPriority}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            onSelectTransaction={(txn) => setSelectedTransaction(txn)}
-            onSimulateRecovery={(txn) => setSimulationTransaction(txn)}
-          />
+          <>
+            {/* 1. Main Hero / Recovery Opportunity Focal Point */}
+            <HeroOpportunitySection summary={summary} isLoading={isLoadingSummary} />
+
+            {/* 2. Compact KPI Cards Row */}
+            <KpiCards summary={summary} isLoading={isLoadingSummary} />
+
+            {/* 3. AI Recovery Opportunities Actionable Panel */}
+            <AiOpportunityPanel analytics={analytics} />
+
+            {/* 4. Clean Recovery Queue Table */}
+            <RecoveryQueue
+              transactions={transactions}
+              isLoading={isLoadingTransactions}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              selectedReason={selectedReason}
+              setSelectedReason={setSelectedReason}
+              selectedPriority={selectedPriority}
+              setSelectedPriority={setSelectedPriority}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              onSelectTransaction={(txn) => setSelectedTransaction(txn)}
+              onSimulateRecovery={(txn) => setSimulationTransaction(txn)}
+            />
+          </>
         )}
 
         {/* Tab 2: Analytics */}
         {activeTab === "analytics" && (
-          <AnalyticsView analytics={analytics} isLoading={isLoadingAnalytics} />
+          <AnalyticsView analytics={analytics} summary={summary} isLoading={isLoadingAnalytics} />
         )}
 
         {/* Tab 3: AI Insights */}
@@ -241,6 +226,13 @@ export default function App() {
           <AiInsightsView insights={insights} isLoading={isLoadingInsights} />
         )}
       </main>
+
+      {/* AI Analysis Step-by-Step Scanner Modal */}
+      <AiAnalysisModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        summary={summary}
+      />
 
       {/* Transaction Detail Modal */}
       {selectedTransaction && (
@@ -254,7 +246,7 @@ export default function App() {
         />
       )}
 
-      {/* Recovery Simulation Modal */}
+      {/* Recovery Simulation Step-by-Step Modal */}
       {simulationTransaction && (
         <RecoverySimulationModal
           transaction={simulationTransaction}
@@ -264,10 +256,8 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        <p>
-          RazorRecover AI — Track 3: AI Revenue Recovery • Explainable Recovery Engine Demo Platform
-        </p>
+      <footer className="border-t border-slate-200/80 bg-white py-4 text-center text-xs text-slate-500 font-medium">
+        <p>RazorRecover AI — Intelligent Payment Revenue Recovery Platform</p>
       </footer>
     </div>
   );

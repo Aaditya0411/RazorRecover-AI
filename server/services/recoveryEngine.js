@@ -1,54 +1,51 @@
 /**
  * RazorRecover AI - Explainable Recovery Scoring Engine
  * 
- * Deterministic, rule-based scoring engine for predicting payment recovery probability,
- * estimating recoverable revenue, recommending optimal recovery actions, and prioritizing recovery queue inventory.
+ * Configurable, deterministic scoring engine for predicting payment recovery probability,
+ * estimating recoverable revenue, recommending optimal recovery actions, and prioritizing recovery inventory.
  * 
- * Future Upgrade Path:
- * This module can be seamlessly replaced with an ML model (XGBoost/LightGBM)
- * or LLM agent without altering the surrounding API contracts or UI components.
+ * Score distribution is realistic across High (>=70%), Medium (40-69%), and Low (<40%) brackets.
  */
 
 // Centralized Configurable Weights Configuration
 const RECOVERY_CONFIG = {
   // Base recovery rates by failure reason (0 to 100)
   failureReasonBase: {
-    network_error: 85,
-    upi_timeout: 75,
-    bank_declined: 68,
-    insufficient_funds: 52,
-    authentication_failure: 58,
-    expired_card: 42,
-    unknown_failure: 35
+    network_error: 78,
+    upi_timeout: 72,
+    bank_declined: 60,
+    insufficient_funds: 45,
+    authentication_failure: 50,
+    expired_card: 32,
+    unknown_failure: 25
   },
 
-  // Payment method recovery factors (multiplier effect / bonus)
+  // Payment method recovery factors
   paymentMethodReliability: {
-    "UPI": +5,
+    "UPI": +4,
     "Card": 0,
-    "Net Banking": +8,
-    "Wallet": -2
+    "Net Banking": +6,
+    "Wallet": -4
   },
 
-  // Customer historical success rate impact factor (weight applied to customerSuccessRate 0..1)
-  customerSuccessWeight: 25, // Adds up to +25 points for 100% success rate
+  // Customer historical success rate impact factor
+  customerSuccessWeight: 20, // Adds up to +20 points for 100% success rate
 
-  // Retry penalty per previous attempt (deducted per retry)
-  retryPenaltyPerAttempt: 12, // -12 points per retry attempt
+  // Retry penalty per previous attempt
+  retryPenaltyPerAttempt: 14, // -14 points per retry attempt
 
   // Transaction age decay (hours)
-  // Fresh transactions (< 2 hours) get bonus, older transactions (> 12 hours) decay
   transactionAgeDecay: {
-    freshBonus: +10,      // < 2 hours
-    moderatePenalty: -5,  // 2 - 12 hours
-    agedPenalty: -18     // > 12 hours
+    freshBonus: +6,        // < 2 hours
+    moderatePenalty: -6,   // 2 - 12 hours
+    agedPenalty: -20       // > 12 hours
   },
 
-  // Amount high-value factor boost (higher ticket value gets priority scoring focus)
+  // Amount high-value factor boost
   amountWeight: {
-    highValueThreshold: 10000,
-    highValueBonus: +6,
-    midValueThreshold: 3000,
+    highValueThreshold: 15000,
+    highValueBonus: +4,
+    midValueThreshold: 5000,
     midValueBonus: +2
   },
 
@@ -63,15 +60,13 @@ const RECOVERY_CONFIG = {
     unknown_failure: "Manual Review"
   },
 
-  // Strict Clamping bounds
-  minProbability: 5,
+  // Clamping bounds
+  minProbability: 12,
   maxProbability: 95
 };
 
 /**
- * Analyzes a single transaction and generates explainable recovery metrics.
- * @param {Object} transaction 
- * @returns {Object} Recovery analysis output
+ * Analyzes a single transaction and calculates explainable recovery metrics.
  */
 function analyzeTransaction(transaction) {
   const {
@@ -115,10 +110,10 @@ function analyzeTransaction(transaction) {
     amountFactor = RECOVERY_CONFIG.amountWeight.midValueBonus;
   }
 
-  // Calculate raw probability
+  // Calculate raw score
   const rawProbability = baseScore + customerBonus - retryPenalty + ageFactor + methodFactor + amountFactor;
 
-  // Clamp probability strictly between 5% and 95%
+  // Clamp probability strictly between 12% and 95%
   const recoveryProbability = Math.min(
     RECOVERY_CONFIG.maxProbability,
     Math.max(RECOVERY_CONFIG.minProbability, Math.round(rawProbability))
@@ -130,8 +125,7 @@ function analyzeTransaction(transaction) {
   // Recommended Action
   const recommendedAction = RECOVERY_CONFIG.recommendedActions[failureReason] || "Manual Review";
 
-  // Strict Priority Logic (Adheres strictly to requirement #2)
-  // High: >= 70%, Medium: >= 40% & < 70%, Low: < 40%
+  // Priority Logic (High: >=70%, Medium: 40-69%, Low: <40%)
   let priority = "Low";
   if (recoveryProbability >= 70) {
     priority = "High";
@@ -139,7 +133,7 @@ function analyzeTransaction(transaction) {
     priority = "Medium";
   }
 
-  // AI Explanation Generation
+  // AI Explanation Text
   const explanation = generateExplanation({
     customerName: customer.name || "The customer",
     failureReason,
@@ -169,9 +163,6 @@ function analyzeTransaction(transaction) {
   };
 }
 
-/**
- * Helper to generate concise, human-readable AI explanation text
- */
 function generateExplanation({
   customerName,
   failureReason,
@@ -184,46 +175,42 @@ function generateExplanation({
   transactionAge
 }) {
   const successPct = Math.round(customerSuccessRate * 100);
-  const failureLabels = {
-    network_error: "temporary network drop",
-    upi_timeout: "UPI gateway timeout",
-    bank_declined: "bank decline",
-    insufficient_funds: "insufficient account balance",
-    authentication_failure: "2FA authentication error",
-    expired_card: "expired payment card"
-  };
-
-  const reasonDesc = failureLabels[failureReason] || "payment issue";
-
-  if (recoveryProbability >= 70) {
-    if (retryCount === 0) {
-      return `${customerName} has a strong payment history (${previousSuccessfulPayments} past successful payments, ${successPct}% success rate). Because this ${reasonDesc} occurred on the first attempt, executing a ${recommendedAction.toLowerCase()} has a very high recovery probability of ${recoveryProbability}%.`;
-    }
-    return `${customerName} is a high-value customer with ${previousSuccessfulPayments} prior successful transactions. Despite ${retryCount} attempt(s), ${recommendedAction.toLowerCase()} retains a ${recoveryProbability}% recovery probability.`;
-  } else if (recoveryProbability >= 40) {
-    if (failureReason === "insufficient_funds") {
-      return `Transaction failed due to ${reasonDesc}. Customer history shows a ${successPct}% completion rate. ${recommendedAction} scheduled for optimal salary cycle timing yields a ${recoveryProbability}% expected recovery.`;
-    }
-    return `Failure due to ${reasonDesc} on ${paymentMethod}. Customer has ${previousSuccessfulPayments} previous payments (${successPct}% success rate). ${recommendedAction} provides a moderate recovery probability of ${recoveryProbability}%.`;
-  } else {
-    if (retryCount >= 2) {
-      return `Multiple retry attempts (${retryCount}) have failed and transaction age is ${transactionAge.toFixed(1)} hours. Recovery probability is low (${recoveryProbability}%). ${recommendedAction} is advised.`;
-    }
-    return `Low historical completion rate (${successPct}%) and ${reasonDesc} lower the recovery likelihood to ${recoveryProbability}%. Recommend ${recommendedAction.toLowerCase()}.`;
+  
+  if (failureReason === "network_error") {
+    return `Network errors are historically highly recoverable. This transaction is recent (${transactionAge.toFixed(1)}h) and ${customerName} has a strong payment history (${previousSuccessfulPayments} successful payments).`;
   }
+  
+  if (failureReason === "bank_declined") {
+    if (recoveryProbability >= 70) {
+      return `Bank declines for regular customers (${successPct}% success rate) show high recovery when offered an alternate payment method like UPI or another card.`;
+    }
+    return `Bank declined the transaction. Offering an alternate payment method provides a moderate recovery opportunity.`;
+  }
+
+  if (failureReason === "upi_timeout") {
+    return `UPI gateway timeout on a high-completion account. A quick retry or mandate reminder yields a ${recoveryProbability}% expected recovery.`;
+  }
+
+  if (failureReason === "insufficient_funds") {
+    return `Transaction failed due to insufficient balance. Scheduling a smart retry during mid-month or salary cycle yields a ${recoveryProbability}% likelihood.`;
+  }
+
+  if (failureReason === "expired_card") {
+    return `Expired card details detected. Automatic retries have low success rate; routing to an interactive card-update flow is recommended.`;
+  }
+
+  if (retryCount >= 2) {
+    return `Multiple retry attempts (${retryCount}) have failed and transaction age is ${transactionAge.toFixed(1)}h. Manual review or direct customer reach-out is advised.`;
+  }
+
+  return `Failure due to ${failureReason.replace('_', ' ')}. Customer has ${previousSuccessfulPayments} past successful transactions. ${recommendedAction} is recommended.`;
 }
 
-/**
- * Batch analyze array of transactions
- */
 function analyzeBatch(transactions) {
-  return transactions.map(txn => {
-    const analysis = analyzeTransaction(txn);
-    return {
-      ...txn,
-      ...analysis
-    };
-  });
+  return transactions.map(txn => ({
+    ...txn,
+    ...analyzeTransaction(txn)
+  }));
 }
 
 module.exports = {
