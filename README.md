@@ -20,15 +20,7 @@ An explainable AI-powered platform that analyzes failed payments, predicts recov
 
 </div>
 
----
 
-## Product Preview
-
-![RazorRecover AI Dashboard](docs/screenshots/dashboard.png)
-
-> *Note: Place dashboard screenshot image as `dashboard.png` inside `docs/screenshots/`.*
-
----
 
 > RazorRecover AI doesn't just tell merchants that a payment failed — it identifies which failed payments are worth recovering, estimates the potential revenue, and recommends the next best recovery action.
 
