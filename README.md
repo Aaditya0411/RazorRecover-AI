@@ -1,167 +1,395 @@
-# RazorRecover AI — Intelligent Payment Revenue Recovery Platform
+<div align="center">
 
-[![Track](https://img.shields.io/badge/Razorpay%20AI%20Builder%20Internship-Track%203%3A%20AI%20Revenue%20Recovery-0284c7?style=for-the-badge)](https://razorpay.com)
-[![Status](https://img.shields.io/badge/Demo-Ready%20%26%20Runnable-10b981?style=for-the-badge)](#)
-[![License](https://img.shields.io/badge/License-MIT-slate?style=for-the-badge)](LICENSE)
+# RazorRecover AI
 
-> **"Don't just flag failed payments — decide which payments are worth recovering, how to recover them, and how much revenue can be saved."**
+### Intelligent Payment Revenue Recovery Platform
 
----
+An explainable AI-powered platform that analyzes failed payments, predicts recovery probability, estimates recoverable revenue, and recommends the next best recovery action.
 
-## 🚀 Problem Statement
+[![React](https://img.shields.io/badge/React-18.2-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.19-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Vite](https://img.shields.io/badge/Vite-5.2-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-Businesses lose substantial revenue daily due to payment failures stemming from bank declines, network dropouts, UPI gateway timeouts, expired credit cards, insufficient balances, and 2FA authentication errors. Standard payment dashboards simply present a transaction as "Failed" without providing actionable intelligence.
+**Status:** Prototype / Internship Submission (**Razorpay AI Builder Internship 2026 — Track 3: AI Revenue Recovery**)
 
-**RazorRecover AI** closes this gap by transforming static payment failure logs into a dynamic, prioritized recovery pipeline:
-```
-Failed Payment ➔ Analyze Failure ➔ Predict Recovery Probability ➔ Recommend Action ➔ Prioritize Queue ➔ Estimate Recoverable Revenue
-```
+[Live Demo](#) • [GitHub Repository](https://github.com/Aaditya0411/RazorRecover-AI) • [Demo Video](#)
 
----
-
-## ✨ Key Features & Highlights
-
-1. **Explainable AI Recovery Engine**: Multi-factor scoring engine analyzing failure reasons, customer trust signals, retry count decay, transaction age, payment method reliability, and ticket value.
-2. **Deterministic & Configurable Weights**: All scoring factors are centralized in `server/services/recoveryEngine.js` with probabilities clamped strictly between **5% and 95%**.
-3. **Zero-Config Database Fallback**: Built-in dual-mode persistence (`server/config/db.js`). Automatically uses an in-memory synthetic transaction store if `MONGODB_URI` is not present, allowing evaluators to run the project out-of-the-box without installing MongoDB.
-4. **Interactive Recovery Simulator**: Merchants can select any failed transaction, execute a "Simulate Recovery" action, and observe live updates to recovered revenue, recovery rate, and total recovered transaction counters.
-5. **Dynamic AI Dataset Insights**: Programmatically extracts actionable insights directly from live transaction telemetry (e.g., top probability failure types, high-priority revenue inventory, expired card routing strategies).
-6. **Telemetry Analytics Dashboard**: Interactive Recharts visualizations including failed vs recoverable revenue bar charts, failure category donut charts, payment method opportunity breakdowns, and probability distributions.
-7. **Internship Demo UI**: Built with React, Vite, and Tailwind CSS following modern fintech dashboard standards with high contrast dark glassmorphism, responsive tables, loading/empty states, search, filtering, and multi-column sorting.
+</div>
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## Product Preview
 
-```
-PROJECT-AI/
-├── client/                   # Frontend SPA (React 18 + Vite + Tailwind CSS + Recharts)
-│   ├── src/
-│   │   ├── components/       # Navbar, KpiCards, RecoveryQueue, DetailModal, Analytics, Insights, Simulator
-│   │   ├── services/api.js   # REST API client
-│   │   └── utils/            # Formatters (INR ₹, probability, date, badges)
-│   └── vite.config.js        # Vite config with API proxy to port 5000
-└── server/                   # Backend REST Service (Node.js + Express)
-    ├── config/db.js          # MongoDB connector with auto in-memory fallback
-    ├── services/
-    │   ├── recoveryEngine.js # Configurable Explainable AI Recovery Scoring Engine
-    │   └── analyticsService.js# Analytics aggregations & dynamic dataset insight generator
-    ├── models/Transaction.js # Mongoose schema & mock transactional repository
-    ├── controllers/          # Request handlers for summary, queue, analytics, simulation
-    └── routes/               # Express REST routes (/api/transactions, /api/summary, /api/recovery/*)
-```
+![RazorRecover AI Dashboard](docs/screenshots/dashboard.png)
 
-- **Frontend**: React 18, Vite, Tailwind CSS, Recharts, Lucide React icons
-- **Backend**: Node.js, Express.js, Cors, Dotenv
-- **Database**: Dual Mode — MongoDB (via Mongoose) or built-in In-Memory Synthetic Store
-- **Intelligence**: Centralized Explainable AI Recovery Engine
+> *Note: Place dashboard screenshot image as `dashboard.png` inside `docs/screenshots/`.*
 
 ---
 
-## 📊 AI Scoring & Priority Logic
+> RazorRecover AI doesn't just tell merchants that a payment failed — it identifies which failed payments are worth recovering, estimates the potential revenue, and recommends the next best recovery action.
 
-### Recovery Probability Formula:
-```
-Base Score (by Failure Reason)
-+ Customer Trust Bonus (Success Rate × 25)
-- Retry Penalty (Retry Count × 12)
-+ Age Factor (Fresh <2h: +10, 2-12h: -5, >12h: -18)
-+ Payment Method Reliability (UPI: +5, NetBanking: +8, Card: 0, Wallet: -2)
-+ Transaction Amount Factor (High Value ≥₹10k: +6)
---------------------------------------------------
-Result: Clamped strictly between 5% and 95%
+---
+
+## The Problem
+
+Payment failures represent a massive source of silent revenue leakage for digital businesses. Standard payment gateways report that a transaction has failed, but provide no intelligence on what to do next.
+
+Merchants face several critical operational challenges:
+* **High Transaction Volume**: Processing thousands of daily payments makes manual review impossible.
+* **Uniform Treatment**: Treating every failure identically results in wasted retries and poor recovery rates.
+* **Transient vs Permanent Failures**: Temporary network drops require instant retries, whereas expired cards require user updates and insufficient funds require timed retries.
+* **Lack of Prioritization**: Merchants lack visibility into which failed transactions represent the highest recoverable revenue inventory.
+
+---
+
+## The Solution
+
+RazorRecover AI transforms static payment failure logs into an explainable, prioritized recovery pipeline:
+
+```text
+Failed Payment
+      ↓
+Failure Analysis
+      ↓
+Customer & Transaction Signals
+      ↓
+Recovery Probability
+      ↓
+Expected Recoverable Revenue
+      ↓
+Priority Ranking
+      ↓
+Next Best Recovery Action
+      ↓
+Recovery Simulation
 ```
 
-### Recovery Action Mapping:
-| Failure Reason | Recommended Next Action |
+By combining transaction characteristics with historical customer trust signals, the system recommends targeted recovery workflows for every transaction.
+
+---
+
+## Key Features
+
+* **AI Recovery Scoring**: Evaluates transaction recency, failure category, retry history, customer success rate, and payment method reliability.
+* **Recovery Queue**: A prioritized inventory ranking failed payments by expected recoverable value (`amount × probability`).
+* **Expected Revenue Engine**: Automatically calculates potential recovery value for individual transactions and aggregate merchant portfolios.
+* **Next Best Recovery Action**: Recommends specific recovery pathways:
+  * `Immediate Smart Retry` (Network errors)
+  * `Retry UPI Payment` (UPI gateway timeouts)
+  * `Offer Alternate Payment Method` (Bank declines)
+  * `Request Card Update` (Expired card details)
+  * `Send Payment Reminder` (Authentication errors)
+  * `Smart Retry Later` (Insufficient funds)
+* **AI Insights**: Derives pattern intelligence directly from current dataset telemetry.
+* **Telemetry Analytics**: Visualizes revenue recovery distribution by failure category and payment method via Recharts.
+* **Recovery Simulation**: Interactive sandbox demonstrating how successful recovery actions update merchant KPIs in real time.
+* **Zero-Config Data Resilience**: Runs out-of-the-box using built-in synthetic data if MongoDB is unavailable.
+
+---
+
+## How the Recovery Engine Works
+
+The intelligence layer is an **explainable deterministic scoring engine** designed as a baseline model. It can later be upgraded to a trained ML model (XGBoost/LightGBM) or LLM agent without changing API contracts or UI components.
+
+### Evaluated Signals:
+1. **Failure Reason Base Rate**: Historical benchmark probability by failure type.
+2. **Customer Trust Index**: Weight applied to the customer's past payment completion rate ($+0 \text{ to } +20 \text{ pts}$).
+3. **Retry Count Penalty**: Deducts points per previous failed retry ($-14 \text{ pts/attempt}$).
+4. **Transaction Age Decay**: Fresh transactions ($<2\text{h}$) receive a bonus ($+6 \text{ pts}$); aged transactions ($>12\text{h}$) decay ($-20 \text{ pts}$).
+5. **Payment Method Factor**: Adjustments based on gateway reliability (Net Banking $+6 \text{ pts}$, UPI $+4 \text{ pts}$, Wallet $-4 \text{ pts}$).
+6. **Ticket Value Factor**: High-value transactions ($\ge ₹15,000$) receive priority weighting.
+
+### Scoring Formula:
+```text
+Recovery Score =
+    Failure Type Signal
+  + Customer History Signal
+  + Payment Method Signal
+  + Transaction Recency Signal
+  - Retry Penalty
+  - Age Decay
+```
+
+```text
+Expected Recovery = Transaction Amount × Recovery Probability
+```
+
+*Final scores are clamped strictly between 12% and 95% to ensure a realistic distribution across High ($\ge 70\%$), Medium ($40\text{--}69\%$), and Low ($<40\%$) priority tiers.*
+
+### Why Explainability Matters
+Merchants require clear reasoning before executing recovery actions. Every recommendation includes plain-language justifications:
+
+> *"Network errors are historically highly recoverable. This transaction is recent (0.2h) and Rahul Verma has a strong payment history (22 successful payments)."*
+
+---
+
+## Example Recovery Decision
+
+| Signal | Value |
 | :--- | :--- |
-| `insufficient_funds` | **Smart Retry Later** |
-| `bank_declined` | **Offer Alternate Payment Method** |
-| `expired_card` | **Request Card Update** |
-| `network_error` | **Immediate Smart Retry** |
-| `upi_timeout` | **Retry UPI Payment** |
-| `authentication_failure` | **Send Payment Reminder** |
-| `unknown_failure` | **Manual Review** |
+| **Transaction ID** | `TXN-1003` |
+| **Customer** | Rahul Verma |
+| **Amount** | ₹14,999 |
+| **Failure Reason** | Network Error |
+| **Customer Success Rate** | 95% (22 past payments) |
+| **Retry Attempt** | 0 |
+| **Recovery Probability** | **92%** |
+| **Expected Recovery** | **₹13,799** |
+| **Recommended Action** | **Immediate Smart Retry** |
 
-### Priority Assignment Rules:
-- 🟢 **High Priority**: Recovery Probability $\ge 70\%$
-- 🟡 **Medium Priority**: Recovery Probability $\ge 40\%$ and $< 70\%$
-- 🔴 **Low Priority**: Recovery Probability $< 40\%$
+**Rationale**: Network drops are transient issues. Because the customer possesses a 95% historical completion rate and 0 previous retries, an immediate retry has a 92% probability of recovering ₹13,799.
 
 ---
 
-## 📡 REST API Documentation
+## Architecture
 
-| Method | Endpoint | Description |
+```mermaid
+flowchart LR
+    UI[React Frontend]
+    API[Express REST API]
+    ENGINE[Recovery Engine]
+    ANALYTICS[Analytics Service]
+    DB[(MongoDB)]
+    MOCK[(In-Memory Dataset)]
+
+    UI --> API
+    API --> ENGINE
+    API --> ANALYTICS
+    ENGINE --> DB
+    ANALYTICS --> DB
+    DB -. fallback .-> MOCK
+```
+
+* **Client Layer**: React 18 SPA built with Vite and Tailwind CSS, utilizing Recharts for data visualization.
+* **Server Layer**: Node.js and Express REST API handling queue processing, metrics calculation, and simulation.
+* **Intelligence Layer**: Modular scoring service (`server/services/recoveryEngine.js`).
+* **Data Layer**: Mongoose repository pattern with automatic fallback to in-memory synthetic storage.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
 | :--- | :--- | :--- |
-| `GET` | `/api/summary` | Returns top KPI metrics (failed revenue, recoverable revenue, recovery rate, high-priority count, recovered total) |
-| `GET` | `/api/transactions` | Returns transactions queue with search (`search`), failure reason (`failureReason`), priority (`priority`), sort (`sortBy`, `sortOrder`) |
-| `GET` | `/api/transactions/:id` | Returns complete details, AI score breakdown, and timeline for a single transaction |
-| `GET` | `/api/analytics` | Returns aggregations for Recharts (failure reason share, revenue breakdown, payment method stats) |
-| `GET` | `/api/insights` | Returns dynamic AI insights extracted from current dataset telemetry |
-| `POST` | `/api/recovery/analyze` | Executes batch AI scan across all transactions and updates scores |
-| `POST` | `/api/recovery/:id/recommend` | Returns targeted recommendation & score factors for a specific transaction |
-| `POST` | `/api/recovery/:id/simulate` | Simulates successful recovery execution and updates status to `recovered` |
-| `POST` | `/api/seed` | Resets dataset to initial 45 synthetic Indian transactions |
+| **Frontend** | React 18 | Declarative UI components |
+| **Build Tool** | Vite 5 | Fast development server and asset bundling |
+| **Styling** | Tailwind CSS 3 | Utility-first responsive styling |
+| **Icons** | Lucide React | Icon set |
+| **Charts** | Recharts 2 | Interactive analytics visualizations |
+| **Backend** | Node.js 18+ | JavaScript runtime environment |
+| **API Framework** | Express 4 | RESTful API endpoint routing |
+| **Database** | MongoDB / Mongoose | Transaction data persistence |
+| **Fallback Store** | In-Memory Engine | Zero-configuration demo execution |
 
 ---
 
-## ⚡ Quick Start & Setup Instructions
+## Project Structure
+
+```text
+RazorRecover-AI/
+├── client/
+│   ├── index.html
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.js
+│   ├── vite.config.js
+│   └── src/
+│       ├── App.jsx
+│       ├── index.css
+│       ├── main.jsx
+│       ├── components/
+│       │   ├── AiAnalysisModal.jsx
+│       │   ├── AiInsightsView.jsx
+│       │   ├── AiOpportunityPanel.jsx
+│       │   ├── AnalyticsView.jsx
+│       │   ├── HeroOpportunitySection.jsx
+│       │   ├── KpiCards.jsx
+│       │   ├── Navbar.jsx
+│       │   ├── RecoveryQueue.jsx
+│       │   ├── RecoverySimulationModal.jsx
+│       │   └── TransactionDetailModal.jsx
+│       ├── services/
+│       │   └── api.js
+│       └── utils/
+│           └── formatters.js
+├── server/
+│   ├── server.js
+│   ├── package.json
+│   ├── config/
+│   │   └── db.js
+│   ├── controllers/
+│   │   └── transactionController.js
+│   ├── models/
+│   │   └── Transaction.js
+│   ├── routes/
+│   │   └── transactionRoutes.js
+│   ├── services/
+│   │   ├── analyticsService.js
+│   │   └── recoveryEngine.js
+│   └── utils/
+│       └── seedData.js
+├── docs/
+│   └── screenshots/
+│       └── README.md
+├── .env.example
+├── .gitignore
+├── LICENSE
+├── package.json
+└── README.md
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18.x or higher)
-- npm (v9.x or higher)
+* **Node.js**: v18.0.0 or higher
+* **npm**: v9.0.0 or higher
+* *(MongoDB is optional; the app runs seamlessly without MongoDB using built-in synthetic data).*
 
-### 1. Installation
-Run setup command from root to install all root, client, and server dependencies:
+### 1. Clone Repository
+```bash
+git clone https://github.com/Aaditya0411/RazorRecover-AI.git
+cd RazorRecover-AI
+```
+
+### 2. Install Dependencies
+Run the root setup command to install dependencies across root, server, and client:
 ```bash
 npm run setup
 ```
 
-### 2. Running in Development Mode
-Start both Node backend (`http://localhost:5000`) and Vite frontend (`http://localhost:5173`) concurrently:
+### 3. Environment Variables
+Create a `.env` file in `server/` (or refer to `.env.example`):
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=
+CLIENT_URL=http://localhost:5173
+```
+
+### 4. Run Development Server
+Start both backend API (`http://localhost:5000`) and frontend UI (`http://localhost:5173`) concurrently:
 ```bash
 npm run dev
 ```
 
-Open your browser at **`http://localhost:5173`**.
+Open **`http://localhost:5173`** in your browser.
 
 ---
 
-## 🎯 5-Minute Demo Flow for Hackathon / Internship Presentation
+## API Reference
 
-1. **Introduction (30s)**:
-   - Present the problem: standard dashboards leave failed revenue on the table. Show **RazorRecover AI** top KPI cards (Total Failed Revenue vs Estimated Recoverable Revenue & Recovery Rate).
-2. **Recovery Inventory Queue & Filtering (1m)**:
-   - Walk through the Recovery Queue table. Filter by `Bank Declined` or `High Priority`. Demonstrate sorting by `AI Probability` and searching for `TXN-1042`.
-3. **Explainable AI Breakdown & Detail Modal (1.5m)**:
-   - Click transaction `TXN-1042` (₹7,999 Bank Decline, 82% recovery probability).
-   - Point out the plain-language AI explanation, the score factors breakdown (base score, customer trust bonus, retry penalty, age decay), and the recovery lifecycle timeline.
-4. **Interactive Revenue Recovery Simulation (1m)**:
-   - Click **"Simulate Recovery"** on a transaction.
-   - Show the sandbox confirmation dialog comparing original amount vs predicted recovery value.
-   - Click **"Confirm & Recover"**. Point out how the top KPI cards (Recovered Revenue, Recovery Rate %, High Priority count) update live!
-5. **Analytics & AI Insights (1m)**:
-   - Switch to **Analytics** tab to showcase Recharts failure category distribution and payment method recovery opportunities.
-   - Switch to **AI Insights** tab to highlight dataset-driven optimization signals.
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/summary` | Fetch dashboard KPI summary metrics |
+| `GET` | `/api/transactions` | Query recovery queue (`search`, `failureReason`, `priority`, `sortBy`) |
+| `GET` | `/api/transactions/:id` | Fetch transaction details, breakdown factors, and history |
+| `GET` | `/api/analytics` | Fetch aggregation datasets for charts |
+| `GET` | `/api/insights` | Fetch dynamic dataset pattern insights |
+| `POST` | `/api/recovery/analyze` | Execute batch AI scan and recalculate recovery scores |
+| `POST` | `/api/recovery/:id/recommend` | Fetch AI recommendation for a single transaction |
+| `POST` | `/api/recovery/:id/simulate` | Execute recovery simulation and update transaction status |
+| `POST` | `/api/seed` | Reset dataset to default 45 synthetic transactions |
 
 ---
 
-## 🔮 Future ML / LLM Upgrade Architecture
+## 5-Minute Demo Flow
 
-The platform is designed with clean service separation to allow replacing the explainable deterministic engine with production ML models without modifying APIs or UI:
-- **Predictive Model**: Replace `server/services/recoveryEngine.js` with an XGBoost/LightGBM binary classifier trained on historical payment attempt telemetry.
-- **Propensity Model**: Train customer-level propensity scoring for payment method selection.
-- **LLM Explanation Layer**: Connect Claude/GPT-4 via LangChain to auto-generate personalized recovery messages (WhatsApp/SMS) per transaction.
+1. **Dashboard Overview (0:30)**: Review top summary cards showing Total Failed Revenue vs Estimated Recoverable Revenue (₹3.78L) and the Donut Yield Chart (84%).
+2. **Run AI Analysis (0:45)**: Click **"Run AI Analysis"** to trigger the step-by-step scanning modal (`Failure patterns analyzed ➔ Customer history analyzed ➔ Recovery probability calculated`).
+3. **Recovery Queue (1:00)**: Filter the table by `Bank Declined` or `High Priority`. Observe probability progress indicators (`████████░░ 82%`) and expected recovery amounts.
+4. **Transaction Detail (1:00)**: Open transaction `TXN-1003`. Review the AI explanation, score factors, customer payment history, and recovery lifecycle timeline.
+5. **Analytics View (0:45)**: Switch to the **Analytics** tab to inspect recoverable revenue by failure category and payment method performance.
+6. **Recovery Simulation (0:45)**: Click **"Simulate Recovery"** on a transaction. Watch the step-by-step recovery animation and observe live updates to Recovered Revenue metrics.
+7. **Close (0:15)**: Conclude with the core value proposition statement.
+
+> *"RazorRecover AI transforms failed payment data into prioritized, explainable recovery opportunities."*
 
 ---
 
-## ⚠️ Limitations & Notes
-- **Synthetic Data**: Uses 45 synthetic Indian payment records with realistic Indian amounts (₹750 to ₹42,000) and payment methods (UPI, Card, Net Banking, Wallet). No real customer or payment data is stored or processed.
-- **Simulation Mode**: The "Simulate Recovery" feature is an interactive UI sandbox designed to demonstrate real-time revenue recovery lifecycle updates.
+## Design Philosophy
+
+* **Merchant-First Workflow**: Focuses on actionable revenue recovery rather than passive log viewing.
+* **Explainable Intelligence**: Eliminates black-box predictions by explaining *why* an action is recommended.
+* **Data-Driven Prioritization**: Ranks recovery efforts by expected financial return.
+* **Zero-Configuration Setup**: Guarantees immediate evaluator execution without external database dependencies.
 
 ---
 
-## 📄 License
+## Zero-Configuration Data Layer
+
+```text
+MONGODB_URI available
+        ↓
+     MongoDB
+        ↓
+Persistent transaction data
+
+MONGODB_URI unavailable
+        ↓
+In-memory dataset
+        ↓
+Instant demo execution
+```
+
+If `MONGODB_URI` is not provided or MongoDB is offline, the system catches the connection attempt gracefully and initializes an in-memory repository populated with 45 synthetic Indian transactions.
+
+---
+
+## Current Limitations
+
+* **Deterministic Baseline**: Uses a rule-based scoring engine rather than a trained machine learning model.
+* **Synthetic Data**: Operates on synthetic transactions formatted for Indian payment channels (UPI, Cards, Net Banking, Wallets).
+* **Sandbox Simulation**: Recovery execution is simulated in-memory; no actual bank accounts or Razorpay credentials are used.
+
+---
+
+## Future Roadmap
+
+- [ ] Train XGBoost/LightGBM recovery models on historical payment attempt datasets
+- [ ] Implement customer-level propensity modeling for payment method selection
+- [ ] Add contextual bandit algorithms for dynamic next-best-action optimization
+- [ ] Integrate webhook listeners for live gateway failure events
+- [ ] Implement automated SMS/WhatsApp recovery message dispatch
+- [ ] Add A/B testing framework for recovery strategies
+
+---
+
+## Security & Privacy
+
+* **No Credentials**: No production payment credentials or private keys are stored.
+* **Synthetic Datasets Only**: Contains no real customer PII or transaction data.
+* **Environment Protection**: Sensitive settings are managed via `.env` and excluded from version control via `.gitignore`.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m "feat: add your feature"`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+---
+
+## License
 
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for details.
+
+---
+
+<div align="center">
+
+### Built for Razorpay AI Builder Internship 2026
+
+**Track 3 — AI Revenue Recovery**
+
+> Turning failed payments into intelligent recovery opportunities.
+
+</div>
