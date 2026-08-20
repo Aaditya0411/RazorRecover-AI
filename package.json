@@ -1,0 +1,27 @@
+{
+  "name": "razor-recover-ai",
+  "version": "1.0.0",
+  "description": "RazorRecover AI - Intelligent Payment Revenue Recovery Platform",
+  "main": "server/server.js",
+  "scripts": {
+    "setup": "npm install && cd server && npm install && cd ../client && npm install",
+    "start": "cd server && npm start",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "ai",
+    "revenue-recovery",
+    "razorpay",
+    "fintech",
+    "payment-failures",
+    "analytics"
+  ],
+  "author": "RazorRecover AI Team",
+  "license": "MIT"
+}
